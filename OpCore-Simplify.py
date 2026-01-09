@@ -411,6 +411,7 @@ class OCPE:
                 hardware_report, native_macos_version, ocl_patched_macos_version = self.c.check_compatibility(hardware_report)
                 macos_version = self.select_macos_version(hardware_report, native_macos_version, ocl_patched_macos_version)
                 customized_hardware, disabled_devices, needs_oclp = self.h.hardware_customization(hardware_report, macos_version)
+                customized_hardware["GPU"] = hardware_report.get("GPU")
                 smbios_model = self.s.select_smbios_model(customized_hardware, macos_version)
                 if not self.ac.ensure_dsdt():
                     self.ac.select_acpi_tables()
