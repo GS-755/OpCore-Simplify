@@ -443,7 +443,7 @@ class ConfigProdigy:
                 return self.cpuids.get("Coffee Lake")
             
         return None
-    
+    # TODO: Add gpu_manufacturer get on parent method 
     def load_kernel_patch(self, motherboard_chipset, cpu_manufacturer, cpu_codename, cpu_cores, gpu_manufacturer, networks, macos_version, kexts):
         kernel_patch = []
 

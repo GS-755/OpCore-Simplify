@@ -104,9 +104,16 @@ class SMBIOS:
             smbios_model = "MacPro5,1" if self.utils.parse_darwin_version(macos_version) < self.utils.parse_darwin_version("19.0.0") else "MacPro6,1"
         elif ("Sandy Bridge" in codename or "Ivy Bridge" in codename) and self.utils.parse_darwin_version(macos_version) < self.utils.parse_darwin_version("22.0.0"):
             smbios_model = "MacPro6,1"
-
-        if platform != "Laptop" and list(hardware_report.get("GPU").items())[-1][-1].get("Device Type") != "Integrated GPU":
-            return smbios_model
+        # Stop generate smbios_model for Desktop/NUC case 
+        if platform != "Laptop":
+            # Assume hardware_report.get("GPU") is None means using Integrated Graphics 
+            # For Sandy Bridge or Ivy Bridge iGPU on Desktop/NUC case 
+            if(hardware_report.get("GPU") is None):
+                return smbios_model
+            # Assume hardware_report.get("GPU") detected Integrated Graphics (Normally 4th-gen or later)
+            # on Desktop/NUC case 
+            if list(hardware_report.get("GPU").items())[-1][-1].get("Device Type") != "Integrated GPU":
+                return smbios_model
         
         if codename in ("Arrandale", "Clarksfield"):
             smbios_model = "MacBookPro6,1"

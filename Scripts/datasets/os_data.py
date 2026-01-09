@@ -17,7 +17,7 @@ macos_versions = [
     macOSVersionInfo("Tahoe", "26")
 ]
 
-def get_latest_darwin_version(include_beta=True):
+def get_latest_darwin_version(include_beta=False):
     for macos_version in macos_versions[::-1]:
         if include_beta:
             return "{}.{}.{}".format(macos_version.darwin_version, 99, 99)

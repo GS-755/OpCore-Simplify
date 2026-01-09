@@ -39,6 +39,9 @@ class CompatibilityChecker:
     def is_low_end_intel_cpu(self, processor_name):
         return any(cpu_branding in processor_name for cpu_branding in ("Celeron", "Pentium"))
 
+    def is_laptop(self, hardware_report):
+        return hardware_report.get("Motherboard").get("Platform") != "Desktop"
+
     def check_cpu_compatibility(self):
         max_version = os_data.get_latest_darwin_version()
         min_version = os_data.get_lowest_darwin_version()
@@ -149,7 +152,8 @@ class CompatibilityChecker:
             if (max_version == min_version and max_version == None) or \
                 ( "Intel" in gpu_manufacturer and device_id.startswith(("01", "04", "0A", "0C", "0D")) and \
                   all(monitor_info.get("Connector Type") == "VGA" and monitor_info.get("Connected GPU", gpu_name) == gpu_name for monitor_name, monitor_info in self.hardware_report.get("Monitor", {}).items())):
-                gpu_props["Compatibility"] = (None, None)
+                # Fallback to macOS 10 => macOS 12 (Darwin: 19 => 21)
+                gpu_props["Compatibility"] = ("19.0.0", "21.99.99")
             else:
                 gpu_props["Compatibility"] = (max_version, min_version)
                 if self.utils.parse_darwin_version(max_version) < self.utils.parse_darwin_version(ocl_patched_max_version):
@@ -196,8 +200,8 @@ class CompatibilityChecker:
             self.utils.request_input()
             self.utils.exit_program()
 
-        self.max_native_macos_version = max_supported_gpu_version if self.utils.parse_darwin_version(max_supported_gpu_version) < self.utils.parse_darwin_version(self.max_native_macos_version) else self.max_native_macos_version
-        self.min_native_macos_version = min_supported_gpu_version if self.utils.parse_darwin_version(min_supported_gpu_version) > self.utils.parse_darwin_version(self.min_native_macos_version) else self.min_native_macos_version
+        self.max_native_macos_version = min_supported_gpu_version if self.utils.parse_darwin_version(min_supported_gpu_version) > self.utils.parse_darwin_version(self.min_native_macos_version) else self.min_native_macos_version
+        self.min_native_macos_version = max_supported_gpu_version if self.utils.parse_darwin_version(max_supported_gpu_version) < self.utils.parse_darwin_version(self.max_native_macos_version) else self.max_native_macos_version
 
     def check_sound_compatibility(self):
         for audio_device, audio_props in self.hardware_report.get("Sound", {}).items():
@@ -370,15 +374,15 @@ class CompatibilityChecker:
 
         steps = [
             ('CPU', self.check_cpu_compatibility),
-            ('GPU', self.check_gpu_compatibility),
             ('Sound', self.check_sound_compatibility),
-            ('Biometric', self.check_biometric_compatibility),
             ('Network', self.check_network_compatibility),
-            ('Storage Controllers', self.check_storage_compatibility),
             ('Bluetooth', self.check_bluetooth_compatibility),
-            ('SD Controller', self.check_sd_controller_compatibility)
+            ('Storage Controllers', self.check_storage_compatibility),
+            ('GPU', self.check_gpu_compatibility)
         ]
-
+        if(self.is_laptop(hardware_report)):
+            steps.append(('Biometric', self.check_biometric_compatibility))
+            steps.append(('SD Controller', self.check_sd_controller_compatibility))
         index = 0
         for device_type, function in steps:
             if self.hardware_report.get(device_type):
