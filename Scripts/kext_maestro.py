@@ -119,27 +119,26 @@ class KextMaestro:
             self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("23.0.0"):
             selected_kexts.append("RestrictEvents")
 
-        for codec_properties in hardware_report.get("Sound", {}).values():
-            if codec_properties.get("Device ID") in codec_layouts.data:
-                if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("25.0.0"):
-                    print("\n\033[1;93mNote:\033[0m Since macOS Tahoe 26 DP2, Apple has removed AppleHDA kext and uses the Apple T2 chip for audio management.")
-                    print("To use AppleALC, you must rollback AppleHDA. Alternatively, you can use VoodooHDA.")
-                    print("")
-                    print("1. \033[1mAppleALC\033[0m - Requires AppleHDA rollback with \033[1;93mOpenCore Legacy Patcher\033[0m")
-                    print("2. \033[1mVoodooHDA\033[0m - Lower audio quality, manual injection to /Library/Extensions")
-                    print("")
-                    while True:
-                        kext_option = self.utils.request_input("Select audio kext for your system: ").strip()
-                        if kext_option == "1":
-                            needs_oclp = True
-                            selected_kexts.append("AppleALC")
-                            break
-                        elif kext_option == "2":
-                            break
-                        else:
-                            print("\033[91mInvalid selection, please try again.\033[0m\n\n")
-                else:
-                    selected_kexts.append("AppleALC")
+        if any(codec_properties.get("Device ID") in codec_layouts.data for codec_properties in hardware_report.get("Sound", {}).values()):
+            if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("25.0.0"):
+                print("\n\033[1;93mNote:\033[0m Since macOS Tahoe 26 DP2, Apple has removed AppleHDA kext and uses the Apple T2 chip for audio management.")
+                print("To use AppleALC, you must rollback AppleHDA. Alternatively, you can use VoodooHDA.")
+                print("")
+                print("1. \033[1mAppleALC\033[0m - Requires AppleHDA rollback with \033[1;93mOpenCore Legacy Patcher\033[0m")
+                print("2. \033[1mVoodooHDA\033[0m - Lower audio quality, manual injection to /Library/Extensions")
+                print("")
+                while True:
+                    kext_option = self.utils.request_input("Select audio kext for your system: ").strip()
+                    if kext_option == "1":
+                        needs_oclp = True
+                        selected_kexts.append("AppleALC")
+                        break
+                    elif kext_option == "2":
+                        break
+                    else:
+                        print("\033[91mInvalid selection, please try again.\033[0m\n\n")
+            else:
+                selected_kexts.append("AppleALC")
         
         if "AMD" in hardware_report.get("CPU").get("Manufacturer") and self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("21.4.0") or \
             int(hardware_report.get("CPU").get("CPU Count")) > 1 and self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("19.0.0"):
@@ -174,26 +173,14 @@ class KextMaestro:
                     print("    2. Navigate to NVRAM -> Add -> 7C436110-AB2A-4BBB-A880-FE41995C9F82 -> boot-args")
                     print("    3. Remove \"-v debug=0x100 keepsyms=1\" from boot-args")
                     print("")
-                    if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("25.0.0"):
-                        recommended_option = 1
-                        recommended_name = "NootRX"
-                        max_option = 3
-                        print("\033[1;93mNote:\033[0m Since macOS Tahoe 26, WhateverGreen has known connector patching issues for AMD {} GPUs.".format(gpu_props.get("Codename")))
-                        print("To avoid this, you can use NootRX or choose not to install a GPU kext.")
-                        print("")
-                        print("1. \033[1mNootRX\033[0m - Uses latest GPU firmware")
-                        print("2. \033[1mWhateverGreen\033[0m - Uses original Apple firmware")
-                        print("3. \033[1mDon't use any kext\033[0m")
-                    else:
-                        recommended_option = 2
-                        recommended_name = "WhateverGreen"
-                        max_option = 2
-                        print("\033[1;93mNote:\033[0m")
-                        print("- AMD {} GPUs have two available kext options:".format(gpu_props.get("Codename")))
-                        print("- You can try different kexts after installation to find the best one for your system")
-                        print("")
-                        print("1. \033[1mNootRX\033[0m - Uses latest GPU firmware")
-                        print("2. \033[1mWhateverGreen\033[0m - Uses original Apple firmware")
+                    recommended_option = 2
+                    recommended_name = "WhateverGreen"
+                    print("\033[1;93mNote:\033[0m")
+                    print("- AMD {} GPUs have two available kext options:".format(gpu_props.get("Codename")))
+                    print("- You can try different kexts after installation to find the best one for your system")
+                    print("")
+                    print("1. \033[1mNootRX\033[0m - Uses latest GPU firmware")
+                    print("2. \033[1mWhateverGreen\033[0m - Uses original Apple firmware")
                     print("")
 
                     if any(other_gpu_props.get("Manufacturer") == "Intel" for other_gpu_props in hardware_report.get("GPU", {}).values()):
@@ -205,7 +192,7 @@ class KextMaestro:
 
                     kext_option = self.utils.request_input("Select kext for your AMD {} GPU (default: {}): ".format(gpu_props.get("Codename"), recommended_name)).strip() or str(recommended_option)
                     
-                    if kext_option.isdigit() and 0 < int(kext_option) < max_option + 1:
+                    if kext_option.isdigit() and 0 < int(kext_option) < 3:
                         selected_option = int(kext_option)
                     else:
                         print("\033[93mInvalid selection, using recommended option: {}\033[0m".format(recommended_option))
@@ -217,16 +204,6 @@ class KextMaestro:
                         selected_kexts.append("WhateverGreen")
                     
                     continue
-
-                if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("25.0.0"):
-                    print("\n*** Found {} is AMD {} GPU.".format(gpu_name, gpu_props.get("Codename")))
-                    print("")
-                    print("\033[1;93mNote:\033[0m Since macOS Tahoe 26, WhateverGreen has known connector patching issues for AMD GPUs.")
-                    print("The current recommendation is to not use WhateverGreen.")
-                    print("However, you can still try adding it to see if it works on your system.")
-                    print("")
-                    self.utils.request_input("Press Enter to continue...")
-                    break
 
                 selected_kexts.append("WhateverGreen")
 
@@ -262,8 +239,6 @@ class KextMaestro:
 
                 if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("24.0.0"):
                     print("   • \033[91mSince macOS Sequoia 15\033[0m: Can work with OCLP root patch but may cause issues")
-                elif self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("23.0.0"):
-                    print("   • \033[91mOn macOS Sonoma 14\033[0m: iServices won't work unless using OCLP root patch")
                 
                 print("")
                 print("2. \033[1mitlwm\033[0m - More stable overall")
@@ -296,23 +271,12 @@ class KextMaestro:
                     
                     if self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("24.0.0"):
                         selected_kexts.append("IOSkywalkFamily")
-                    elif self.utils.parse_darwin_version(macos_version) >= self.utils.parse_darwin_version("23.0.0"):
-                        print("")
-                        print("\033[1;93mNote:\033[0m Since macOS Sonoma 14, iServices won't work with AirportItlwm without patches")
-                        print("")
-                        while True:
-                            option = self.utils.request_input("Apply OCLP root patch to fix iServices? (yes/No): ").strip().lower()
-                            if option == "yes":
-                                selected_kexts.append("IOSkywalkFamily")
-                                break
-                            elif option == "no":
-                                break
-                            else:
-                                print("\033[91mInvalid selection, please try again.\033[0m\n\n")
             elif device_id in pci_data.AtherosWiFiIDs[:8]:
                 selected_kexts.append("corecaptureElCap")
                 if self.utils.parse_darwin_version(macos_version) > self.utils.parse_darwin_version("20.99.99"):
                     selected_kexts.append("AMFIPass")
+            elif device_id in pci_data.rtw88WiFiIDs:
+                selected_kexts.append("Feixiao")
             elif device_id in pci_data.IntelI22XIDs:
                 selected_kexts.append("AppleIGC")
             elif device_id in pci_data.AtherosE2200IDs:
@@ -344,6 +308,8 @@ class KextMaestro:
                 selected_kexts.append("BrcmFirmwareData")
             elif usb_id in pci_data.IntelBluetoothIDs:
                 selected_kexts.append("IntelBluetoothFirmware")
+            elif usb_id in pci_data.RealtekBluetoothIDs:
+                selected_kexts.append("RealtekBluetoothFirmware")
             elif usb_id in pci_data.BluetoothIDs[-1]:
                 selected_kexts.append("BlueToolFixup")
 
@@ -438,10 +404,14 @@ class KextMaestro:
             if kext.checked:
                 try:
                     source_kext_path = destination_kext_path = None
+                    kext_name = kext.name
 
-                    kext_paths = self.utils.find_matching_paths(self.ock_files_dir, extension_filter=".kext", name_filter=kext.name)
+                    if kext_name == "Feixiao":
+                        kext_name = "rtw88"
+
+                    kext_paths = self.utils.find_matching_paths(self.ock_files_dir, extension_filter=".kext", name_filter=kext_name)
                     for kext_path, type in kext_paths:
-                        if "AirportItlwm" == kext.name:
+                        if "AirportItlwm" == kext_name:
                             version = macos_version[:2]
                             if all((self.kexts[kext_data.kext_index_by_name.get("IOSkywalkFamily")].checked, self.kexts[kext_data.kext_index_by_name.get("IO80211FamilyLegacy")].checked)) or self.utils.parse_darwin_version("24.0.0") <= self.utils.parse_darwin_version(macos_version):
                                 version = "22"
@@ -458,7 +428,7 @@ class KextMaestro:
                             main_kext = kext_path.split("/")[0]
                             main_kext_index = kext_data.kext_index_by_name.get(main_kext)
                             if not main_kext_index or self.kexts[main_kext_index].checked:
-                                if os.path.splitext(os.path.basename(kext_path))[0] in kext.name:
+                                if os.path.splitext(os.path.basename(kext_path))[0] in kext_name:
                                     source_kext_path = os.path.join(self.ock_files_dir, kext_path)
                                     destination_kext_path = os.path.join(kexts_directory, os.path.basename(kext_path))
                     
@@ -480,6 +450,14 @@ class KextMaestro:
         executable_path = os.path.join("Contents", "MacOS", bundle_info.get("CFBundleExecutable", "None"))
         if not os.path.exists(os.path.join(kexts_directory, kext_path, executable_path)):
             executable_path = ""
+
+        bundle_libraries = {
+            bundle_identifier: bundle_version
+            for bundle_identifier, bundle_version in bundle_info.get("OSBundleLibraries", {}).items() 
+        }
+
+        if bundle_info.get("CFBundleExecutable", "None") == "AppleALC":
+            bundle_libraries["org.ChefKiss.NootedRed"] = "0.8.10"
         
         return {
             "BundlePath": kext_path.replace("\\", "/").lstrip("/"),
@@ -488,10 +466,7 @@ class KextMaestro:
             "PlistPath": plist_path.replace("\\", "/").lstrip("/"),
             "BundleIdentifier": bundle_info.get("CFBundleIdentifier"),
             "BundleVersion": bundle_info.get("CFBundleVersion"),
-            "BundleLibraries": {
-                bundle_identifier: bundle_version
-                for bundle_identifier, bundle_version in bundle_info.get("OSBundleLibraries", {}).items() 
-            }
+            "BundleLibraries": bundle_libraries
         }
 
     def modify_kexts(self, plist_path, hardware_report, macos_version):
@@ -562,13 +537,17 @@ class KextMaestro:
         seen_identifier = set()
 
         def visit(bundle):
-            if os.path.splitext(os.path.basename(bundle.get("BundlePath")))[0] in unload_kext or (bundle.get("BundlePath"), bundle.get("BundleIdentifier")) in visited:
+            kext_name = os.path.splitext(os.path.basename(bundle.get("BundlePath")))[0]
+            if kext_name == "rtw88":
+                kext_name = "Feixiao"
+
+            if kext_name in unload_kext or (bundle.get("BundlePath"), bundle.get("BundleIdentifier")) in visited:
                 return
                         
             bundle["MaxKernel"] = os_data.get_latest_darwin_version()
             bundle["MinKernel"] = os_data.get_lowest_darwin_version()
 
-            kext_index = kext_data.kext_index_by_name.get(os.path.splitext(os.path.basename(bundle.get("BundlePath")))[0])
+            kext_index = kext_data.kext_index_by_name.get(kext_name)
 
             if kext_index:
                 bundle["MaxKernel"] = self.kexts[kext_index].max_darwin_version
@@ -581,9 +560,9 @@ class KextMaestro:
                     bundle["MaxKernel"] = bundle["MaxKernel"] if self.utils.parse_darwin_version(bundle["MaxKernel"]) < self.utils.parse_darwin_version(bundle_dict[dep_identifier].get("MaxKernel", "99.99.99")) else bundle_dict[dep_identifier]["MaxKernel"]
                     bundle["MinKernel"] = bundle["MinKernel"] if self.utils.parse_darwin_version(bundle["MinKernel"]) > self.utils.parse_darwin_version(bundle_dict[dep_identifier].get("MinKernel", "0.0.0")) else bundle_dict[dep_identifier]["MinKernel"]
 
-            if os.path.splitext(os.path.basename(bundle.get("BundlePath")))[0] == "AirPortBrcm4360_Injector":
+            if kext_name == "AirPortBrcm4360_Injector":
                 bundle["MaxKernel"] = "19.99.99"
-            elif os.path.splitext(os.path.basename(bundle.get("BundlePath")))[0] == "AirportItlwm":
+            elif kext_name == "AirportItlwm":
                 bundle["MaxKernel"] = macos_version[:2] + bundle["MaxKernel"][2:]
                 bundle["MinKernel"] = macos_version[:2] + bundle["MinKernel"][2:]
 
@@ -604,7 +583,7 @@ class KextMaestro:
 
         for bundle in sorted_bundles:
             kernel_add.append({
-                "Arch": "x86_64",
+                "Arch": "Any",
                 "BundlePath": bundle.get("BundlePath"),
                 "Comment": "",
                 "Enabled": bundle.get("Enabled"),

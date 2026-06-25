@@ -128,10 +128,6 @@ kexts = [
         github_repo = {
             "owner": "ChefKissInc",
             "repo": "NootedRed"
-        },
-        download_info = {
-            "id": int("".join(random.choices('0123456789', k=9))), 
-            "url": "https://nightly.link/ChefKissInc/NootedRed/workflows/main/master/Artifacts.zip"
         }
     ),
     KextInfo(
@@ -171,7 +167,7 @@ kexts = [
         category = "Wi-Fi",
         conflict_group_id = "IntelWiFi",
         github_repo = {
-            "owner": "OpenIntelWireless",
+            "owner": "DexterSLamb",
             "repo": "itlwm"
         }
     ),
@@ -185,6 +181,16 @@ kexts = [
         download_info = {
             "id": 348147192, 
             "url": "https://github.com/dortania/OpenCore-Legacy-Patcher/raw/refs/heads/main/payloads/Kexts/Wifi/corecaptureElCap-v1.0.2.zip"
+        }
+    ),
+    KextInfo(
+        name = "Feixiao", 
+        description = "Realtek WLAN (rtw88) driver for macOS",
+        category = "Wi-Fi",
+        min_darwin_version = "20.0.0",
+        github_repo = {
+            "owner": "thegwchr",
+            "repo": "Feixiao"
         }
     ),
     KextInfo(
@@ -227,7 +233,7 @@ kexts = [
         category = "Wi-Fi",
         conflict_group_id = "IntelWiFi",
         github_repo = {
-            "owner": "OpenIntelWireless",
+            "owner": "DexterSLamb",
             "repo": "itlwm"
         }
     ),
@@ -313,7 +319,7 @@ kexts = [
         category = "Bluetooth",
         requires_kexts = ["BlueToolFixup", "IntelBTPatcher", "IntelBluetoothInjector"],
         github_repo = {
-            "owner": "lshbluesky",
+            "owner": "OpenIntelWireless",
             "repo": "IntelBluetoothFirmware"
         }
     ),
@@ -323,7 +329,7 @@ kexts = [
         category = "Bluetooth",
         requires_kexts = ["Lilu", "BlueToolFixup", "IntelBluetoothFirmware", "IntelBluetoothInjector"],
         github_repo = {
-            "owner": "lshbluesky",
+            "owner": "OpenIntelWireless",
             "repo": "IntelBluetoothFirmware"
         }
     ),
@@ -334,8 +340,18 @@ kexts = [
         max_darwin_version = "20.99.99",
         requires_kexts = ["BlueToolFixup", "IntelBluetoothFirmware", "IntelBTPatcher"],
         github_repo = {
-            "owner": "lshbluesky",
+            "owner": "OpenIntelWireless",
             "repo": "IntelBluetoothFirmware"
+        }
+    ),
+    KextInfo(
+        name = "RealtekBluetoothFirmware", 
+        description = "Uploads firmware to enable Realtek Bluetooth support",
+        category = "Bluetooth",
+        requires_kexts = ["BlueToolFixup"],
+        github_repo = {
+            "owner": "thegwchr",
+            "repo": "RealtekBluetoothFirmware"
         }
     ),
     KextInfo(
@@ -750,10 +766,6 @@ kexts = [
         github_repo = {
             "owner": "ChefKissInc",
             "repo": "ForgedInvariant"
-        },
-        download_info = {
-            "id": int("".join(random.choices('0123456789', k=9))), 
-            "url": "https://nightly.link/ChefKissInc/ForgedInvariant/workflows/main/master/Artifacts.zip"
         }
     ),
     KextInfo(
